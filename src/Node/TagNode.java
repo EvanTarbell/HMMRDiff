@@ -334,6 +334,7 @@ public class TagNode {
             double PeakScore1 = node1.getStart();
             double PeakScore2 = node2.getStart();
             if (PeakScore1 < PeakScore2) return -1;
+            else if(PeakScore1==PeakScore2) return 0;
             else return 1;
     }
     };

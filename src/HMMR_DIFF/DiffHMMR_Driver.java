@@ -6,10 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import stats.ANOSIM;
+import stats.GenerateSimMatrix;
 import be.ac.ulg.montefiore.run.jahmm.Hmm;
 import be.ac.ulg.montefiore.run.jahmm.ObservationVector;
 import be.ac.ulg.montefiore.run.jahmm.io.HmmBinaryReader;
 import fileReaders.bedFileReader;
+import fileReaders.labelCSVReader;
 import ATACFragments.FragPileupGen;
 import ATACFragments.TrackHolder;
 import LocalModel.buildLocalModel;
@@ -24,6 +27,7 @@ public class DiffHMMR_Driver {
 	public static String labels=null;
 	public static String peaks=null;
 	public static int ext=0;
+	public static double threshold;
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws FileNotFoundException, IOException {
@@ -34,24 +38,44 @@ public class DiffHMMR_Driver {
 		labels=p.getLabels();
 		peaks=p.getPeaks();
 		ext = p.getExtension();
+		threshold=p.getThreshold();
 		
+		boolean labelsAreFile=false;
 		
 		//Exit program if  sample list is null or not comma separated 
 		// or labels is empty or not a comma separated list or not a csv file
 		if ( 
 				(samples == null || !samples.contains(",")) || 
-				( labels == null || (!labels.contains(",") || !labels.contains(".csv")) )
+				( labels == null || (!labels.contains(",") && !labels.contains(".csv")) )
 				
 			){		
 			p.printUsage();
 			System.exit(1);
 		}
 		
-		//Check to make sure that if dynamic labeling then peak file input
+		//Check to make sure that if dynamic labeling then peak file input, then read labels
+		ArrayList<String[]> lab = new ArrayList<String[]>();
+		int numberLabels=0;
 		if(peaks == null && labels.contains(".csv")){
 			System.out.println("Warning: Dynamic Labeling requires predefined peak file");
 			p.printUsage();
 			System.exit(1);
+		} else if(peaks != null && labels.contains(".csv")){
+			labelsAreFile=true;
+			labelCSVReader csvReader = new labelCSVReader(labels);
+			lab.addAll(csvReader.getData());
+			numberLabels = lab.size();
+			csvReader=null;
+		} else if(labels.contains(",")){
+			
+			lab.add(labels.split(","));
+			labelsAreFile=false;
+			numberLabels=1;
+			if(!ANOSIM.isValid(labels.split(","))){
+				System.out.println("Warning: Label list must contain 2 conditions and 2 condtions only");
+				p.printUsage();
+				System.exit(1);
+			}
 		}
 		
 		//Populate the sample holder which contains the file names of all samples
@@ -64,6 +88,13 @@ public class DiffHMMR_Driver {
 		} else{
 			bedFileReader bedRead = new bedFileReader(peaks);
 			masterPeaks = bedRead.getData();
+			if(labelsAreFile){
+				if (masterPeaks.size() != numberLabels){
+					System.out.println("Warning: csv file containing labels is not same length as input bed file of peaks");
+					p.printUsage();
+					System.exit(1);
+				}
+			}
 		}
 		
 		//Define mode for FragPileupGen
@@ -90,6 +121,7 @@ public class DiffHMMR_Driver {
 				double cpmScale = holder.getScalingFactors().get(a);
 				int trim = holder.getTrims().get(a);
 				
+				//Generate signal matrix
 				FragPileupGen gen = new FragPileupGen(bam, index, temp, mode, fragMeans, fragStddevs,minMapQ,rmDup,cpmScale);
 				TrackHolder trackHolder = new TrackHolder((gen.transformTracks(gen.scaleTracks(gen.getAverageTracks()))),trim);
 				
@@ -108,7 +140,17 @@ public class DiffHMMR_Driver {
 				
 			}//Loop through samples
 			
+			//Generate the similarity matrix of kullback lieber distances
+			double[][] simMatrix = new GenerateSimMatrix(localModels).getData();
 			
+			String[] label;
+			if(labelsAreFile){
+				label=lab.get(i);
+			} else{
+				label = lab.get(0);
+			}
+			
+			ANOSIM anosim = new ANOSIM(simMatrix, label, threshold);
 			
 		}//Loop through master peak set
 		
