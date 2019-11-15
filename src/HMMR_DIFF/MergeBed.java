@@ -31,7 +31,7 @@ public class MergeBed {
 		TagNode first = input.get(0);
 		for (int i = 1;i < input.size();i++){
 			TagNode next = input.get(i);
-			if (first.getStop() == next.getStart()){
+			if (first.getStop() >= next.getStart()){
 				first.setStop(next.getStop());
 			}
 			else{

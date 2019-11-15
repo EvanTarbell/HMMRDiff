@@ -46,15 +46,34 @@ public class SampleHolder {
 	
 	
 	private void set(){
+		
+		sampleModels = new ArrayList<String>();
+		sampleLogs = new ArrayList<String>();
+		sampleGappedPeaks = new ArrayList<String>();
+		sampleBedgraphs = new ArrayList<String>();
+		sampleBAMS = new ArrayList<String>();
+		sampleBAI = new ArrayList<String>();
+		sampleFragMeans= new  ArrayList<double[]>();
+		sampleFragStds = new  ArrayList<double[]>();
+		sampleMinQ = new ArrayList<Integer>();
+		sampleTrims = new ArrayList<Integer>();
+		sampleRmDups = new ArrayList<Boolean>();
+		scalingFactor = new ArrayList<Double>();
+		
 		String[] fields = samples.split(",");
 		for (int i = 0 ; i < fields.length;i++){
 			String value = fields[i];
-			
+
 			//Populate lists with file names for each sample
+			
 			sampleGappedPeaks.add(value+"_peaks.gappedPeak");
+			
 			sampleBedgraphs.add(value+".bedgraph");
+			
 			sampleLogs.add(value+".log");
+			
 			sampleModels.add(value+".model");
+			
 			
 			//Read Log file to populate lists of fragment means/sd, BAM/BAI file names
 			Scanner inFile = null;

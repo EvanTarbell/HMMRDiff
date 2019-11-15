@@ -58,6 +58,7 @@ public class ExtendBed {
 			}
 			int stop = input.get(i).getStop() + extSize;
 			TagNode temp = new TagNode(chr,start,stop);
+			temp.setSummit(input.get(i));
 			output.add(temp);
 		}
 	}

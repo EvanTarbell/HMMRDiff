@@ -194,11 +194,13 @@ public class FragPileupGen {
 				end = (tracks.size() - end) + end;
 			}
 			for (int a = i; a < end;a++){
-				counter+=1.0;
-				temp[0]+=tracks.get(a)[0];
-				temp[1]+=tracks.get(a)[1];
-				temp[2]+=tracks.get(a)[2];
-				temp[3]+=tracks.get(a)[3];
+				if (tracks.get(a)!=null) {
+					counter += 1.0;
+					temp[0] += tracks.get(a)[0];
+					temp[1] += tracks.get(a)[1];
+					temp[2] += tracks.get(a)[2];
+					temp[3] += tracks.get(a)[3];
+				}
 			}
 			for (int a = 0;a < temp.length;a++){
 				temp[a]/=counter;

@@ -10,12 +10,14 @@ import Node.TagNode;
 public class gappedPeakReader {
 	
 	private String file;
+	private double filter=0;
 	
 	
 	private ArrayList<TagNode> data;
 	
-	public gappedPeakReader(String f){
+	public gappedPeakReader(String f,double fl){
 		file = f;
+		filter=fl;
 		setData();
 	}
 	
@@ -33,7 +35,7 @@ public class gappedPeakReader {
 		while (inFile.hasNextLine()){
 			String line = inFile.nextLine();
 			String[] fields = line.split("\\s+");
-			if (!fields[3].contains("HighCoverage")){
+			if (!fields[3].contains("HighCoverage") && Double.parseDouble(fields[12]) >= filter){
 				data.add(new TagNode(fields[0],Integer.parseInt(fields[1]),Integer.parseInt(fields[2]) ) );
 			}
 		}

@@ -37,11 +37,27 @@ public class KullbackLieber {
 	private double findDistance(Hmm<ObservationVector> hmm1,Hmm<ObservationVector> hmm2,int nbSequences,int sequencesLength) {
         double distance = 0.0;
         for (int i = 0; i < nbSequences; i++) {
+			
         	MarkovGenerator<ObservationVector> gen = new MarkovGenerator<ObservationVector>(hmm1);
     		List<ObservationVector> oseq = gen.observationSequence(sequencesLength);
+    		
+    		Long startTimeSeq = System.currentTimeMillis();
+
     		int[] states = hmm1.mostLikelyStateSequence(oseq);
+			
+    		Long startTimeProb = System.currentTimeMillis();
+    		
+			// System.out.println("Time to generate seq in milliseconds:\t"+( Long.toString((startTimeProb - startTimeSeq)/1)));
+
             double da = probability(hmm1,oseq,states);
             double db = probability(hmm2,oseq,states);
+            
+            Long stopTimeProb = System.currentTimeMillis();
+			// System.out.println("Time to calculate probability in milliseconds:\t"+( Long.toString((stopTimeProb - startTimeProb)/1)));
+			
+			// System.out.println("Time to full test per seq in milliseconds:\t"+( Long.toString((stopTimeProb - startTimeSeq)/1)));
+			
+            
             distance += da - db;
         }
         return distance / (double)(nbSequences * sequencesLength);

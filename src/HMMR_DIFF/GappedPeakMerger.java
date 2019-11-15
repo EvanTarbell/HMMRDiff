@@ -10,12 +10,14 @@ public class GappedPeakMerger {
 	
 	private SampleHolder hold;
 	private int extension;
+	private double filter;
 	
 	private ArrayList<TagNode> peaks;
 	
-	public GappedPeakMerger(SampleHolder h,int x){
+	public GappedPeakMerger(SampleHolder h,int x,double f){
 		hold=h;
 		extension = x;
+		filter=f;
 		makePeaks();
 	}
 	
@@ -26,13 +28,13 @@ public class GappedPeakMerger {
 		ArrayList<String> files = hold.getGappedPeaks();
 		for (int i = 0; i < files.size();i++){
 			String f = files.get(i);
-			peaks.addAll(new ExtendBed
-					(new gappedPeakReader(f).getData(),extension).getResults());
+			peaks.addAll(new gappedPeakReader(f,filter).getData());
 			
 		}
 		
 		Collections.sort(peaks, TagNode.basepairComparator);
 		peaks = new MergeBed(peaks).getResults();
+		peaks = new ExtendBed(peaks,extension).getResults();
 		
 	}
 

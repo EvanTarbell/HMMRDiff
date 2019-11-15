@@ -1,6 +1,7 @@
 package LocalModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.math3.stat.correlation.StorelessCovariance;
@@ -27,15 +28,33 @@ public class buildLocalModel {
 	}
 
 	public Hmm<?> getLocalModel(){return localHMM;}
+	
+	private int getK(int[] states){
+		HashMap<Integer,Integer> map = new HashMap<Integer,Integer>();
+		for (int i = 0; i < states.length;i++){
+			if (!map.containsKey(states[i])){
+				map.put(states[i], 1);
+			}
+		}
+		
+		int counter=0;
+		for(@SuppressWarnings("unused") int key : map.keySet()){
+			counter++;
+		}
+		
+		return counter;
+	}
 
+	@SuppressWarnings("unchecked")
 	private  Hmm<?> build(int[] states, ArrayList<ObservationVector> list,Hmm<?> hmm){
 		
 		List<OpdfMultiGaussian> opdf = new ArrayList<OpdfMultiGaussian>();
 		OpdfMultiGaussian pdf = (OpdfMultiGaussian) hmm.getOpdf(0);
 		int dim = pdf.dimension();
 		int K = hmm.nbStates();
+//		int K = getK(states);
 		
-		for (int a = 0; a < hmm.nbStates();a++){
+		for (int a = 0; a < K;a++){
 			
 			int stateCounter=0;
 			double[] means = new double[dim];
@@ -74,7 +93,9 @@ public class buildLocalModel {
 			
 			//printCovariance(covMat);
 			if (stateCounter == 0){
-				pdf = (OpdfMultiGaussian) hmm.getOpdf(a);
+				means = new double[dim];
+				covMat = new double[dim][dim];
+				pdf = new OpdfMultiGaussian(means, covMat);
 				opdf.add(pdf);
 			}
 			else{
@@ -95,7 +116,12 @@ public class buildLocalModel {
 					elementCounter += trans[i][x];
 				}
 				for (int y = 0; y < trans[i].length;y++){
-					trans[i][y] /= elementCounter;
+					if (elementCounter>0){
+						trans[i][y] /= elementCounter;
+					} else{
+						trans[i][y] = 0;
+					}
+					
 				}
 			}
 		
@@ -107,6 +133,24 @@ public class buildLocalModel {
 			}
 		
 		hmm = new Hmm<ObservationVector>(initial,trans,opdf);
+		hmm = checkModel((Hmm<ObservationVector>)hmm);
+		return hmm;
+	}
+	
+	/**
+	 * Check the model 
+	 * @param hmm HMM to check
+	 * @return modified HMM after robust correction
+	 */
+	private Hmm<ObservationVector> checkModel(Hmm<ObservationVector> hmm){
+		for (int i = 0;i < hmm.nbStates();i++){
+			OpdfMultiGaussian pdf = (OpdfMultiGaussian) hmm.getOpdf(i);
+			double[][] cov = pdf.covariance();
+			FitRobust fitter = new FitRobust(cov);
+			double[][] temp = fitter.getCovariance();
+			OpdfMultiGaussian t = new OpdfMultiGaussian(pdf.mean(),temp);
+			hmm.setOpdf(i, t);
+		}
 		return hmm;
 	}
 }

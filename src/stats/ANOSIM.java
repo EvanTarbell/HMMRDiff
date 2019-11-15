@@ -8,10 +8,57 @@ public class ANOSIM {
 	private String[] labels;
 	private double threshold;
 	
+	private double score;
+	private boolean isSignif=false;
+	
 	public ANOSIM(double[][] m, String[] l,double t){
 		matrix=m;labels=l;threshold=t;
+		calculate();
+	}
+	
+	private void calculate(){
+		
+		if(ANOSIM.isValid(labels)){
+			if(isSpecialCase()){
+				score = calculateOneToOne();
+				if(score >= threshold){
+					isSignif = true;
+				}
+			} else{
+				score = calculateStandard();
+				if(score >= threshold){
+					isSignif = true;
+				}
+			}
+		}
 		
 	}
+	
+	/*
+	 * TODO: Write method for calculating n X m matices
+	 */
+	private double calculateStandard(){
+		return 0;
+	}
+	
+	private double calculateOneToOne(){
+		
+		int index1 = -1;
+		int index2 = -1;
+		for (int i = 0;i< labels.length;i++){
+			if (!labels[i].equals("NA")){
+				if (index1 >= 0){
+					index2=i;
+				} else {
+					index1=i;
+				}
+			}
+		}
+		return matrix[index1][index2];
+	}
+	
+	public boolean isSignificant(){return isSignif;}
+	public double getScore(){return score;}
 	
 	public boolean isSpecialCase(){
 		
